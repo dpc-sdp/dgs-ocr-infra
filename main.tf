@@ -4,13 +4,13 @@ terraform {
       source = "Azure/azapi"
     }
   }
-  # backend "azurerm" {
-  #   resource_group_name  = ""
-  #   storage_account_name = ""
-  #   container_name       = ""
-  #   access_key           = ""
-  #   key                  = "terraform.tfstate"
-  # }
+  backend "azurerm" {
+    resource_group_name  = "state_rg"
+    storage_account_name = "state_sa"
+    container_name       = "state_cn"
+    access_key           = "state_ak"
+    key                  = "terraform.tfstate"
+  }
 }
 
 provider "azurerm" {
@@ -39,6 +39,7 @@ locals {
   back_target_port                = 5000
   back_cpu                        = 0.5
   back_memory                     = "1Gi"
+  back_modelid                    = "neural_v1_9"
   back_min_replicas               = 1
   back_max_replicas               = 1
   back_allowed_ip1                = "149.96.92.248"
@@ -214,13 +215,6 @@ resource "azurerm_key_vault_secret" "key" {
   depends_on = [azurerm_key_vault_access_policy.terraform]
 }
 
-resource "azurerm_key_vault_secret" "modelid" {
-  name         = "modelid"
-  value        = "neural_v1_5"
-  key_vault_id = azurerm_key_vault.terraform.id
-  depends_on = [azurerm_key_vault_access_policy.terraform]
-}
-
 resource "azurerm_key_vault_secret" "dburi" {
   name         = "dburi"
   value        = "postgresql+psycopg2://${local.db_administrator_login}@${local.prefix}db:${random_password.password.result}@${local.prefix}db.postgres.database.azure.com:5432/${local.prefix}?sslmode=require"
@@ -328,6 +322,10 @@ resource "azapi_resource" "back" {
             cpu = local.back_cpu
             memory = local.back_memory
           }
+          env = [{
+            name = "modelid"
+            value = local.back_modelid
+          }]
         }]
         scale = {
           minReplicas = local.back_min_replicas
