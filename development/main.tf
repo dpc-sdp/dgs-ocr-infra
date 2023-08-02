@@ -40,7 +40,7 @@ locals {
   back_target_port                = 5000
   back_cpu                        = 0.5
   back_memory                     = "1Gi"
-  back_modelid                    = "neural_v1_9"
+  back_modelid                    = "neural_v2_0"
   back_min_replicas               = 1
   back_max_replicas               = 1
   back_allowed_ip1                = "149.96.92.248"
