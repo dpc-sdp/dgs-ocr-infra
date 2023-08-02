@@ -47,4 +47,4 @@ jobs:
           sed -i -e 's@state_cn@'$DEV_CONTAINER_NAME'@g' main.tf
           sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key}}'@g' main.tf
           terraform init
-          terraform apply
+          terraform apply -auto-approve
