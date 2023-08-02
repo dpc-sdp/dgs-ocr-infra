@@ -128,18 +128,19 @@ resource "azurerm_role_assignment" "registry" {
   depends_on = [azurerm_container_registry.terraform]
 }
 
-resource "azurerm_cognitive_account" "terraform" {
-  name                = "${local.prefix}cognitiveaccount"
-  resource_group_name = local.resource_group_name
-  location            = local.location
-  kind                = "FormRecognizer"
-  sku_name            = "S0"
-  tags                = local.tags
-  lifecycle {
-    ignore_changes = [tags]
-  }
-  depends_on = [azurerm_resource_group.terraform]
-}
+# new cognitive account initialization
+# resource "azurerm_cognitive_account" "terraform" {
+#   name                = "${local.prefix}cognitiveaccount"
+#   resource_group_name = local.resource_group_name
+#   location            = local.location
+#   kind                = "FormRecognizer"
+#   sku_name            = "S0"
+#   tags                = local.tags
+#   lifecycle {
+#     ignore_changes = [tags]
+#   }
+#   depends_on = [azurerm_resource_group.terraform]
+# }
 
 resource "azurerm_key_vault" "terraform" {
   name                         = "${local.prefix}vault"
@@ -228,19 +229,21 @@ resource "random_password" "snpassword" {
   override_special = "!#$%&*()-_=+[]{}<>"
 }
 
-resource "azurerm_key_vault_secret" "endpoint" {
-  name         = "endpoint"
-  value        = "https://formrecognizer-ocr-dev-sandbox.cognitiveservices.azure.com"
-  key_vault_id = azurerm_key_vault.terraform.id
-  depends_on = [azurerm_key_vault_access_policy.terraform]
-}
+# new cognitive account endpoint
+# resource "azurerm_key_vault_secret" "endpoint" {
+#   name         = "endpoint"
+#   value        = azurerm_cognitive_account.terraform.endpoint
+#   key_vault_id = azurerm_key_vault.terraform.id
+#   depends_on = [azurerm_key_vault_access_policy.terraform]
+# }
 
-resource "azurerm_key_vault_secret" "key" {
-  name         = "key"
-  value        = "b8567b38e9804234adccf56ce1c980df"
-  key_vault_id = azurerm_key_vault.terraform.id
-  depends_on = [azurerm_key_vault_access_policy.terraform]
-}
+# new cognitive account key
+# resource "azurerm_key_vault_secret" "key" {
+#   name         = "key"
+#   value        = azurerm_cognitive_account.terraform.primary_access_key
+#   key_vault_id = azurerm_key_vault.terraform.id
+#   depends_on = [azurerm_key_vault_access_policy.terraform]
+# }
 
 resource "azurerm_key_vault_secret" "dburi" {
   name         = "dburi"
@@ -448,7 +451,7 @@ resource "azapi_resource" "front" {
           }
           env = [{
             name = "REACT_APP_ENDPOINT"
-              value = "http://prodocrback:5000"
+              value = "http://${local.prefix}back:${local.back_target_port}"
           }]
         }]
         scale = {
