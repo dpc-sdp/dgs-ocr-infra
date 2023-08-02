@@ -59,10 +59,10 @@ jobs:
         if: ${{ inputs.env == 'uat'}}
         run: |
           cd uat
-          ARM_CLIENT_ID: ${{secrets.UAT_ARM_CLIENT_ID}}
-          ARM_CLIENT_SECRET: ${{secrets.UAT_ARM_CLIENT_SECRET}}
-          ARM_TENANT_ID: ${{secrets.UAT_ARM_TENANT_ID}}
-          ARM_SUBSCRIPTION_ID: ${{secrets.UAT_ARM_SUBSCRIPTION_ID}}
+          ARM_CLIENT_ID=${{secrets.UAT_ARM_CLIENT_ID}}
+          ARM_CLIENT_SECRET=${{secrets.UAT_ARM_CLIENT_SECRET}}
+          ARM_TENANT_ID=${{secrets.UAT_ARM_TENANT_ID}}
+          ARM_SUBSCRIPTION_ID=${{secrets.UAT_ARM_SUBSCRIPTION_ID}}
           sed -i -e 's@state_rg@'$UAT_APP_RESOURCE_GROUP_NAME'@g' main.tf
           sed -i -e 's@state_sa@'$UAT_STORAGE_ACCOUNT_NAME'@g' main.tf
           sed -i -e 's@state_cn@'$UAT_CONTAINER_NAME'@g' main.tf
@@ -73,10 +73,10 @@ jobs:
         if: ${{ inputs.env == 'production'}}
         run: |
           cd production
-          ARM_CLIENT_ID: ${{secrets.PROD_ARM_CLIENT_ID}}
-          ARM_CLIENT_SECRET: ${{secrets.PROD_ARM_CLIENT_SECRET}}
-          ARM_TENANT_ID: ${{secrets.PROD_ARM_TENANT_ID}}
-          ARM_SUBSCRIPTION_ID: ${{secrets.PROD_ARM_SUBSCRIPTION_ID}}
+          ARM_CLIENT_ID=${{secrets.PROD_ARM_CLIENT_ID}}
+          ARM_CLIENT_SECRET=${{secrets.PROD_ARM_CLIENT_SECRET}}
+          ARM_TENANT_ID=${{secrets.PROD_ARM_TENANT_ID}}
+          ARM_SUBSCRIPTION_ID=${{secrets.PROD_ARM_SUBSCRIPTION_ID}}
           sed -i -e 's@state_rg@'$PROD_APP_RESOURCE_GROUP_NAME'@g' main.tf
           sed -i -e 's@state_sa@'$PROD_STORAGE_ACCOUNT_NAME'@g' main.tf
           sed -i -e 's@state_cn@'$PROD_CONTAINER_NAME'@g' main.tf
