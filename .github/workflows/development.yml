@@ -9,7 +9,7 @@ env:
   CONTAINER_NAME: "devocrstoragecontainer"
 
 jobs:  
-  login:
+  get-key:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/azure-cli
@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: login
+      - name: get-key
         id: id
         run: |
           az login --service-principal --username ${{secrets.ARM_CLIENT_ID}} --password ${{secrets.ARM_CLIENT_SECRET}} --tenant ${{secrets.ARM_TENANT_ID}}
@@ -35,15 +35,16 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: hashicorp/terraform
-    needs: login
+    needs: get-key
     steps:
       - name: checkout
         uses: actions/checkout@v3
       - name: deploy
         run: |
+          cd development
           sed -i -e 's@state_rg@'$APP_RESOURCE_GROUP_NAME'@g' main.tf
           sed -i -e 's@state_sa@'$STORAGE_ACCOUNT_NAME'@g' main.tf
           sed -i -e 's@state_cn@'$CONTAINER_NAME'@g' main.tf
-          sed -i -e 's@state_ak@'${{needs.login.outputs.output-access-key}}'@g' main.tf
+          sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key}}'@g' main.tf
           terraform init
           terraform apply -auto-approve
