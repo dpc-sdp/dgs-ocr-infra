@@ -48,7 +48,7 @@ jobs:
           echo "access-key=$ACCESS_KEY" >> $GITHUB_OUTPUT
 
   deploy-uat:
-    if: ${{ inputs.env == 'production'}}
+    if: ${{ inputs.env == 'uat'}}
     env:
       ARM_CLIENT_ID: ${{secrets.UAT_ARM_CLIENT_ID}}
       ARM_CLIENT_SECRET: ${{secrets.UAT_ARM_CLIENT_SECRET}}
