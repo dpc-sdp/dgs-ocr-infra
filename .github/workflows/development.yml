@@ -1,0 +1,50 @@
+on:
+  push:
+    branches:
+      - master
+
+env:
+  APP_RESOURCE_GROUP_NAME: "development-ocr"
+  STORAGE_ACCOUNT_NAME: "devocrstorageaccount"
+  CONTAINER_NAME: "devocrstoragecontainer"
+
+jobs:  
+  get-key:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/azure-cli
+    outputs:
+      output-access-key: ${{steps.id.outputs.access-key}}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: get-key
+        id: id
+        run: |
+          az login --service-principal --username ${{secrets.ARM_CLIENT_ID}} --password ${{secrets.ARM_CLIENT_SECRET}} --tenant ${{secrets.ARM_TENANT_ID}}
+          az account set --subscription ${{secrets.ARM_SUBSCRIPTION_ID}}
+          ACCESS_KEY=$(az storage account keys list --resource-group $APP_RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+          echo "access-key=$ACCESS_KEY" >> $GITHUB_OUTPUT
+
+  deploy:
+    env:
+      ARM_CLIENT_ID: ${{secrets.ARM_CLIENT_ID}}
+      ARM_CLIENT_SECRET: ${{secrets.ARM_CLIENT_SECRET}}
+      ARM_TENANT_ID: ${{secrets.ARM_TENANT_ID}}
+      ARM_SUBSCRIPTION_ID: ${{secrets.ARM_SUBSCRIPTION_ID}}
+    runs-on: ubuntu-latest
+    container:
+      image: hashicorp/terraform
+    needs: get-key
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: deploy
+        run: |
+          cd development
+          sed -i -e 's@state_rg@'$APP_RESOURCE_GROUP_NAME'@g' main.tf
+          sed -i -e 's@state_sa@'$STORAGE_ACCOUNT_NAME'@g' main.tf
+          sed -i -e 's@state_cn@'$CONTAINER_NAME'@g' main.tf
+          sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key}}'@g' main.tf
+          terraform init
+          terraform apply -auto-approve
