@@ -28,10 +28,10 @@ jobs:
 
   deploy:
     env:
-      DEV_ARM_CLIENT_ID: ${{secrets.DEV_ARM_CLIENT_ID}}
-      DEV_ARM_CLIENT_SECRET: ${{secrets.DEV_ARM_CLIENT_SECRET}}
-      DEV_ARM_TENANT_ID: ${{secrets.DEV_ARM_TENANT_ID}}
-      DEV_ARM_SUBSCRIPTION_ID: ${{secrets.DEV_ARM_SUBSCRIPTION_ID}}
+      ARM_CLIENT_ID: ${{secrets.DEV_ARM_CLIENT_ID}}
+      ARM_CLIENT_SECRET: ${{secrets.DEV_ARM_CLIENT_SECRET}}
+      ARM_TENANT_ID: ${{secrets.DEV_ARM_TENANT_ID}}
+      ARM_SUBSCRIPTION_ID: ${{secrets.DEV_ARM_SUBSCRIPTION_ID}}
     runs-on: ubuntu-latest
     container:
       image: hashicorp/terraform
