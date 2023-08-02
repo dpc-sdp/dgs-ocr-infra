@@ -389,7 +389,7 @@ resource "azapi_resource" "back" {
       template = {
         containers = [{
           name = "${local.prefix}back"
-          image = "${local.registry}/${local.back_image}" #
+          image = "${local.registry}/${local.back_image}"
           resources = {
             cpu = local.back_cpu
             memory = local.back_memory
@@ -444,7 +444,7 @@ resource "azapi_resource" "front" {
       template = {
         containers = [{
           name = "${local.prefix}front"
-          image = "${local.registry}/${local.front_image}" #
+          image = "${local.registry}/${local.front_image}"
           resources = {
             cpu = local.front_cpu
             memory = local.front_memory
