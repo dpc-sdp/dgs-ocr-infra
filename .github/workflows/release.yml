@@ -73,7 +73,7 @@ jobs:
           sed -i -e 's@state_cn@'$UAT_CONTAINER_NAME'@g' main.tf
           sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key-uat}}'@g' main.tf
           terraform init
-          terraform apply -auto-approve
+          terraform apply
       - name: production
         if: ${{ inputs.env == 'production'}}
         run: |
@@ -83,4 +83,4 @@ jobs:
           sed -i -e 's@state_cn@'$PROD_CONTAINER_NAME'@g' main.tf
           sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key-prod}}'@g' main.tf
           terraform init
-          terraform apply -auto-approve
+          terraform apply
