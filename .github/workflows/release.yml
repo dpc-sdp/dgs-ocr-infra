@@ -47,7 +47,13 @@ jobs:
           ACCESS_KEY=$(az storage account keys list --resource-group $PROD_APP_RESOURCE_GROUP_NAME --account-name $PROD_STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
           echo "access-key=$ACCESS_KEY" >> $GITHUB_OUTPUT
 
-  deploy:
+  deploy-uat:
+    if: ${{ inputs.env == 'production'}}
+    env:
+      ARM_CLIENT_ID: ${{secrets.UAT_ARM_CLIENT_ID}}
+      ARM_CLIENT_SECRET: ${{secrets.UAT_ARM_CLIENT_SECRET}}
+      ARM_TENANT_ID: ${{secrets.UAT_ARM_TENANT_ID}}
+      ARM_SUBSCRIPTION_ID: ${{secrets.UAT_ARM_SUBSCRIPTION_ID}}
     runs-on: ubuntu-latest
     container:
       image: hashicorp/terraform
@@ -55,28 +61,34 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-      - name: uat
-        if: ${{ inputs.env == 'uat'}}
+      - name: deploy-uat
         run: |
           cd uat
-          ARM_CLIENT_ID=${{secrets.UAT_ARM_CLIENT_ID}}
-          ARM_CLIENT_SECRET=${{secrets.UAT_ARM_CLIENT_SECRET}}
-          ARM_TENANT_ID=${{secrets.UAT_ARM_TENANT_ID}}
-          ARM_SUBSCRIPTION_ID=${{secrets.UAT_ARM_SUBSCRIPTION_ID}}
           sed -i -e 's@state_rg@'$UAT_APP_RESOURCE_GROUP_NAME'@g' main.tf
           sed -i -e 's@state_sa@'$UAT_STORAGE_ACCOUNT_NAME'@g' main.tf
           sed -i -e 's@state_cn@'$UAT_CONTAINER_NAME'@g' main.tf
           sed -i -e 's@state_ak@'${{needs.get-key.outputs.output-access-key-uat}}'@g' main.tf
           terraform init
           terraform apply
-      - name: production
-        if: ${{ inputs.env == 'production'}}
+
+  deploy-prod:
+    if: ${{ inputs.env == 'production'}}
+    env:
+      ARM_CLIENT_ID: ${{secrets.PROD_ARM_CLIENT_ID}}
+      ARM_CLIENT_SECRET: ${{secrets.PROD_ARM_CLIENT_SECRET}}
+      ARM_TENANT_ID: ${{secrets.PROD_ARM_TENANT_ID}}
+      ARM_SUBSCRIPTION_ID: ${{secrets.PROD_ARM_SUBSCRIPTION_ID}}
+    runs-on: ubuntu-latest
+    container:
+      image: hashicorp/terraform
+    needs: get-key
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: deploy-prod
+        if: ${{ inputs.env == 'uat'}}
         run: |
-          cd production
-          ARM_CLIENT_ID=${{secrets.PROD_ARM_CLIENT_ID}}
-          ARM_CLIENT_SECRET=${{secrets.PROD_ARM_CLIENT_SECRET}}
-          ARM_TENANT_ID=${{secrets.PROD_ARM_TENANT_ID}}
-          ARM_SUBSCRIPTION_ID=${{secrets.PROD_ARM_SUBSCRIPTION_ID}}
+          cd production 
           sed -i -e 's@state_rg@'$PROD_APP_RESOURCE_GROUP_NAME'@g' main.tf
           sed -i -e 's@state_sa@'$PROD_STORAGE_ACCOUNT_NAME'@g' main.tf
           sed -i -e 's@state_cn@'$PROD_CONTAINER_NAME'@g' main.tf
