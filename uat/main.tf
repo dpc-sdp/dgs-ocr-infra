@@ -27,12 +27,13 @@ locals {
   tags = {
     "Owner"         = "aleksei.trifonov@dpc.vic.gov.au"
     "Client"        = "VIC"
-    "Environment"   = "Development"
+    "Environment"   = "UAT"
   }
-  resource_group_name             = "development-ocr"
-  prefix                          = "devocr"
+  resource_group_name             = "uat-ocr"
+  prefix                          = "uatocr"
   location                        = "Australia East"
   log_days                        = "30"
+  registry                        = "devocrregistry.azurecr.io"
   back_image                      = "coolforms"
   back_allow_external             = true
   back_allow_insecure             = false
@@ -58,6 +59,8 @@ locals {
   dapr_blobstorage_component      = "coolfiles"
   storage_mb                      = 5120
   db_administrator_login          = "user"
+  ui_username                     = "admin@servian.com"
+  sn_username                     = "admin@servian.com"
 }
 
 resource "azurerm_resource_group" "terraform" {
@@ -201,23 +204,89 @@ resource "azurerm_key_vault_access_policy" "vault" {
   depends_on = [azurerm_key_vault.terraform]
 }
 
+resource "random_password" "jwtsecretkey" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>"
+}
+
+resource "random_password" "apikey" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>"
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>"
+}
+
+resource "random_password" "snpassword" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>"
+}
+
 resource "azurerm_key_vault_secret" "endpoint" {
   name         = "endpoint"
-  value        = azurerm_cognitive_account.terraform.endpoint
+  value        = "https://formrecognizer-ocr-dev-sandbox.cognitiveservices.azure.com"
   key_vault_id = azurerm_key_vault.terraform.id
   depends_on = [azurerm_key_vault_access_policy.terraform]
 }
 
 resource "azurerm_key_vault_secret" "key" {
   name         = "key"
-  value        = azurerm_cognitive_account.terraform.primary_access_key
+  value        = "b8567b38e9804234adccf56ce1c980df"
   key_vault_id = azurerm_key_vault.terraform.id
   depends_on = [azurerm_key_vault_access_policy.terraform]
 }
 
 resource "azurerm_key_vault_secret" "dburi" {
   name         = "dburi"
-  value        = "postgresql+psycopg2://${local.db_administrator_login}@${local.prefix}db:${random_password.password.result}@${local.prefix}db.postgres.database.azure.com:5432/${local.prefix}?sslmode=require"
+  value        = "postgresql+psycopg2://${local.db_administrator_login}@${local.prefix}db:${random_password.db_administrator_password.result}@${local.prefix}db.postgres.database.azure.com:5432/${local.prefix}?sslmode=require"
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "jwtsecretkey" {
+  name         = "jwtsecretkey"
+  value        = random_password.jwtsecretkey.result
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "apikey" {
+  name         = "apikey"
+  value        = random_password.apikey.result
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "username" {
+  name         = "username"
+  value        = local.ui_username
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "password" {
+  name         = "password"
+  value        = random_password.password.result
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "snusername" {
+  name         = "snusername"
+  value        = local.sn_username
+  key_vault_id = azurerm_key_vault.terraform.id
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "snpassword" {
+  name         = "snpassword"
+  value        = random_password.snpassword.result
   key_vault_id = azurerm_key_vault.terraform.id
   depends_on = [azurerm_key_vault_access_policy.terraform]
 }
@@ -317,7 +386,7 @@ resource "azapi_resource" "back" {
       template = {
         containers = [{
           name = "${local.prefix}back"
-          image = "${local.prefix}registry.azurecr.io/${local.back_image}" #
+          image = "${local.registry}/${local.back_image}" #
           resources = {
             cpu = local.back_cpu
             memory = local.back_memory
@@ -372,15 +441,15 @@ resource "azapi_resource" "front" {
       template = {
         containers = [{
           name = "${local.prefix}front"
-          image = "${local.prefix}registry.azurecr.io/${local.front_image}" #
+          image = "${local.registry}/${local.front_image}" #
           resources = {
             cpu = local.front_cpu
             memory = local.front_memory
-            # env = [{
-            #   name = "API"
-            #   value = azapi_resource.back.endpoint
-            # }]
           }
+          env = [{
+            name = "REACT_APP_ENDPOINT"
+              value = "http://uatocrback:5000"
+          }]
         }]
         scale = {
           minReplicas = local.front_min_replicas
@@ -448,7 +517,7 @@ resource "azapi_resource" "blobstorage" {
   ]
 }
 
-resource "random_password" "password" {
+resource "random_password" "db_administrator_password" {
   length           = 16
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>"
@@ -466,7 +535,7 @@ module "postgresql" {
   backup_retention_days         = 7
   geo_redundant_backup_enabled  = false
   administrator_login           = local.db_administrator_login
-  administrator_password        = random_password.password.result
+  administrator_password        = random_password.db_administrator_password.result
   server_version                = "11"
   ssl_enforcement_enabled       = true
   public_network_access_enabled = true #
