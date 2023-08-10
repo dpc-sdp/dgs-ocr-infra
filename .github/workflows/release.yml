@@ -3,7 +3,7 @@ name: release
 on:
   workflow_dispatch:
     inputs:
-      env:
+      environment:
         required: true
         default: 'uat'
         type: choice
@@ -31,7 +31,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: get-key-uat
-        if: ${{ inputs.env == 'uat'}}
+        if: ${{ inputs.environment == 'uat'}}
         id: id-uat
         run: |
           az login --service-principal --username ${{secrets.UAT_ARM_CLIENT_ID}} --password ${{secrets.UAT_ARM_CLIENT_SECRET}} --tenant ${{secrets.UAT_ARM_TENANT_ID}}
@@ -39,7 +39,7 @@ jobs:
           ACCESS_KEY=$(az storage account keys list --resource-group $UAT_APP_RESOURCE_GROUP_NAME --account-name $UAT_STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
           echo "access-key=$ACCESS_KEY" >> $GITHUB_OUTPUT
       - name: get-key-prod
-        if: ${{ inputs.env == 'production'}}
+        if: ${{ inputs.environment == 'production'}}
         id: id-prod
         run: |
           az login --service-principal --username ${{secrets.PROD_ARM_CLIENT_ID}} --password ${{secrets.PROD_ARM_CLIENT_SECRET}} --tenant ${{secrets.PROD_ARM_TENANT_ID}}
@@ -48,7 +48,7 @@ jobs:
           echo "access-key=$ACCESS_KEY" >> $GITHUB_OUTPUT
 
   deploy-uat:
-    if: ${{ inputs.env == 'uat'}}
+    if: ${{ inputs.environment == 'uat'}}
     env:
       ARM_CLIENT_ID: ${{secrets.UAT_ARM_CLIENT_ID}}
       ARM_CLIENT_SECRET: ${{secrets.UAT_ARM_CLIENT_SECRET}}
@@ -72,7 +72,7 @@ jobs:
           terraform apply -auto-approve
 
   deploy-prod:
-    if: ${{ inputs.env == 'production'}}
+    if: ${{ inputs.environment == 'production'}}
     env:
       ARM_CLIENT_ID: ${{secrets.PROD_ARM_CLIENT_ID}}
       ARM_CLIENT_SECRET: ${{secrets.PROD_ARM_CLIENT_SECRET}}
