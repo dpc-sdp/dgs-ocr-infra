@@ -34,7 +34,7 @@ locals {
   location                        = "Australia East"
   log_days                        = "30"
   registry                        = "devocrregistry.azurecr.io"
-  back_image                      = "coolforms"
+  back_image                      = "backend"
   back_allow_external             = true
   back_allow_insecure             = false
   back_target_port                = 5000
@@ -47,7 +47,7 @@ locals {
   back_allowed_ip2                = "149.96.88.248"
   back_allowed_ip3                = "103.23.64.8/29"
   back_allowed_ip4                = "103.23.65.8/29"
-  front_image                     = "docai"
+  front_image                     = "frontend"
   front_allow_external            = true
   front_allow_insecure            = false
   front_target_port               = 80
